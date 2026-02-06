@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSpace - Nosso Refúgio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a, #581c87);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 2rem;
+        }
+
+        .breathe-circle {
+            transition: all 4s ease-in-out;
+            box-shadow: 0 0 50px rgba(147, 197, 253, 0.3);
+        }
+
+        .expanding { transform: scale(1.4); background: rgba(147, 197, 253, 0.3); }
+        .shrinking { transform: scale(1); background: rgba(147, 197, 253, 0.05); }
+
+        /* Estilo do modal de carinho */
+        #heart-popup {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full mb-6 text-center text-blue-200 opacity-80 italic px-4">
+        "Nos melhores sorrisos ou nas noites mais difíceis, eu estou — e sempre estarei — exatamente aqui com você."
+    </div>
+
+    <div class="glass max-w-4xl w-full p-8 text-white shadow-2xl relative">
+        
+        <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-purple-200">
+                    Seu Porto Seguro
+                </h1>
+                <p class="text-sm opacity-60" id="date-display"></p>
+            </div>
+            <button onclick="showHeart()" class="bg-pink-500/20 hover:bg-pink-500/40 p-3 rounded-full transition-all group">
+                <span class="text-pink-300">❤️ Lembrar de Nós</span>
+            </button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <div class="glass p-6 bg-white/5">
+                    <h3 class="mb-4 font-semibold flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        Monitor de Frequência Mental
+                    </h3>
+                    <div id="logs" class="text-xs space-y-2 h-32 overflow-y-auto font-mono opacity-70">
+                        </div>
+                </div>
+
+                <div class="glass p-6 bg-white/5">
+                    <p class="text-sm italic text-blue-100/80" id="daily-quote">
+                        "O medo é apenas um visitante, ele não mora aqui."
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center py-6">
+                <div id="visualizer" class="breathe-circle w-40 h-40 rounded-full border-2 border-blue-400/50 flex items-center justify-center text-lg font-light tracking-widest uppercase">
+                    Pronta?
+                </div>
+                
+                <div class="mt-10 text-center">
+                    <p id="instruction" class="text-lg font-medium mb-6 min-h-[3rem] text-blue-100">
+                        Clique abaixo para silenciar o mundo.
+                    </p>
+                    <button onclick="toggleProtection()" id="actionBtn" 
+                            class="bg-blue-500 hover:bg-blue-400 text-white px-10 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-xl active:scale-95">
+                        Ativar Escudo de Paz
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="heart-popup" class="absolute inset-0 glass bg-blue-900/90 flex flex-col items-center justify-center z-50 p-10 text-center">
+            <h2 class="text-4xl mb-6">❤️</h2>
+            <p class="text-2xl font-light leading-relaxed mb-8">
+                Ei, olha pra mim... <br>
+                <b>Eu estou aqui.</b> <br>
+                Não importa o quão barulhenta esteja sua mente agora, eu sou seu silêncio e seu abrigo. <br>
+                Sempre estarei com você, nos melhores e nos piores momentos.
+            </p>
+            <button onclick="closeHeart()" class="text-sm uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">Voltar para o exercício</button>
+        </div>
+    </div>
+
+    <script>
+        const State = {
+            isActive: false,
+            logs: ["Conexão segura estabelecida.", "Proteção emocional em standby."],
+            quotes: [
+                "Você é segura.", "Isso vai passar, como tudo passa.", "Respire por nós dois agora.",
+                "Sua mente é sua fortaleza.", "Foque apenas na minha voz e na sua respiração."
+            ]
+        };
+
+        function init() {
+            document.getElementById('date-display').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' });
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logs');
+            container.innerHTML = State.logs.map(l => `<div><span class="text-blue-400">></span> ${l}</div>`).reverse().join('');
+        }
+
+        function addLog(msg) {
+            State.logs.push(msg);
+            if(State.logs.length > 8) State.logs.shift();
+            renderLogs();
+        }
+
+        function showHeart() { document.getElementById('heart-popup').style.display = 'flex'; }
+        function closeHeart() { document.getElementById('heart-popup').style.display = 'none'; }
+
+        function toggleProtection() {
+            State.isActive = !State.isActive;
+            const btn = document.getElementById('actionBtn');
+            const visualizer = document.getElementById('visualizer');
+
+            if(State.isActive) {
+                btn.innerText = "Respirando com você...";
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                addLog("Escudo ativado.");
+                addLog("Bloqueando ruídos externos...");
+                startSession();
+            }
+        }
+
+        function startSession() {
+            let i = 0;
+            const visualizer = document.getElementById('visualizer');
+            const instruction = document.getElementById('instruction');
+
+            setInterval(() => {
+                if(i % 2 === 0) {
+                    visualizer.className = "breathe-circle w-40 h-40 rounded-full border-2 border-blue-400 flex items-center justify-center text-lg expanding";
+                    visualizer.innerText = "Inspira";
+                    instruction.innerText = State.quotes[Math.floor(Math.random() * State.quotes.length)];
+                    addLog("Oxigenando a alma...");
+                } else {
+                    visualizer.className = "breathe-circle w-40 h-40 rounded-full border-2 border-blue-400 flex items-center justify-center text-lg shrinking";
+                    visualizer.innerText = "Expira";
+                    addLog("Soltando o peso dos ombros...");
+                }
+                i++;
+            }, 4000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
